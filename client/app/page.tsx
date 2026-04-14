@@ -50,26 +50,43 @@ export default function Home() {
     setError(null);
     setProgress(0);
 
-    const formData = new FormData();
-    valid.forEach((f) => formData.append("files", f));
+    // Batch files in groups of 50 (server limit)
+    const BATCH_SIZE = 50;
+    const batches: File[][] = [];
+    for (let i = 0; i < valid.length; i += BATCH_SIZE) {
+      batches.push(valid.slice(i, i + BATCH_SIZE));
+    }
+
+    let processed = 0;
+    const errors: string[] = [];
 
     try {
-      setProgress(30);
-      const res = await fetch(`${API_URL}/api/invoices/parse`, {
-        method: "POST",
-        body: formData,
-      });
+      for (const batch of batches) {
+        const formData = new FormData();
+        batch.forEach((f) => formData.append("files", f));
 
-      setProgress(80);
+        const res = await fetch(`${API_URL}/api/invoices/parse`, {
+          method: "POST",
+          body: formData,
+        });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => null);
-        throw new Error(errData?.error || `Error ${res.status}`);
+        processed += batch.length;
+        setProgress(Math.round((processed / valid.length) * 95));
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          errors.push(errData?.error || `Error ${res.status} en lote de ${batch.length} archivos`);
+          continue;
+        }
+
+        const { data } = await res.json();
+        setRecords((prev) => [...prev, ...data]);
       }
 
-      const { data } = await res.json();
-      setRecords((prev) => [...prev, ...data]);
       setProgress(100);
+      if (errors.length > 0) {
+        setError(`${errors.length} lote(s) fallaron: ${errors[0]}`);
+      }
     } catch (err: any) {
       setError(err.message || "Error al procesar las facturas");
     } finally {

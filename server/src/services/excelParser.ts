@@ -38,7 +38,7 @@ function normalize(s: string): string {
 
 export async function parseExcel(buffer: Buffer): Promise<InvoiceData[]> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(buffer);
+  await workbook.xlsx.load(buffer as any);
 
   const sheet = workbook.worksheets[0];
   if (!sheet || sheet.rowCount < 2) return [];
