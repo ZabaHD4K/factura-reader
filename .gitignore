@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# build
+dist/
+.next/
+out/
+build/
+
+# env
+.env*
+
+# misc
+.DS_Store
+*.pem
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+
+# Claude / AI
+CLAUDE.md
+AGENTS.md
+.claude/
